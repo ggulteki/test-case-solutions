@@ -161,9 +161,94 @@ def get_posts(user_id: int, post_ids: List[int]) -> List[Post]:
             db.close()
     return out
 
+# My limitations for guaranteeing O(N) time complexity:
+
+# DO:
+
+# Use single-pass loops (O(N)).
+# Use hash maps or sets if they improve lookup efficiency.
+# Use linear-time sorting (if applicable, e.g., counting sort).
+
+# AVOID:
+
+# Nested loops that cause O(N²) complexity.
+# Sorting unless absolutely necessary (O(N log N)).
+# Recursive solutions without memoization, as they might have exponential time complexity.
+# Unoptimized hash table operations, which can degrade to O(N) in the worst case.
+
+# Solution 2:
+@dataclass
+class Post:
+    id: int
+    owner_id: int
+
+def mix_by_owners(posts: List[Post]) -> List[Post]:
+    db = None
+    out = []
+    try:
+        db = sqlite3.connect("user.db")
+        crsr = db.cursor()
+
+
+
+    except sqlite3.Error as e:
+        print(f"Error executing query: {e}")
+        if db:
+            db.rollback()
+    except ValueError as ve:
+        print(ve)  # Handle the case where the user is not found
+    finally:
+        if db:
+            db.close()
+    return out
+
 if __name__ == "__main__":
     init_database()
+    '''
+    # Test cases for Q1
+
+    user_id = 2
+    post_ids = [2, 3, 1]
+
     user_id = 2
     post_ids = [4, 2, 1]
+
+    user_id = 4
+    post_ids = [2, 3, 1]
+
     posts = get_posts(user_id, post_ids)
     print(posts)
+    '''
+
+    db = None
+    try:
+        db = sqlite3.connect("user.db")
+        crsr = db.cursor()
+
+        # Get the post_id and owner_id
+        crsr.execute("SELECT id, user_id FROM POST")
+        row_out = crsr.fetchall()
+
+        if row_out is None:
+            raise ValueError("No posts found in database")
+
+        post = []
+        for row in row_out:
+            post.append(Post(id=row[0], owner_id=row[1]))
+
+        print(post)
+
+        sorted_post = mix_by_owners(post)
+        print(sorted_post)
+
+    except sqlite3.Error as e:
+        print(f"Error executing query: {e}")
+        if db:
+            db.rollback()
+    except ValueError as ve:
+        print(ve)  # Handle the case where the user is not found
+    finally:
+        if db:
+            db.close()
+
+
