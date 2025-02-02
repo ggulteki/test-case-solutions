@@ -11,8 +11,9 @@ from dataclasses import dataclass
 from collections import defaultdict
 from collections import deque
 
-# TRANSFORM UNSUED SOLUTIONS BELOW INTO COMMENT BLOCKS BEFORE TRYING ANY SOLUTION TO PREVENT TECHNICAL CONFLICTS
+"""NOTE: TRANSFORM UNSUED SOLUTIONS BELOW INTO COMMENT BLOCKS BEFORE TRYING ANY SOLUTION TO PREVENT TECHNICAL CONFLICTS"""
 
+"""DB INITIALIZE FUNCTION FOR SOLUTIONS. I CHOOSE SQLITE3 BECAUSE OF ITS SIMPLY FORM"""
 def init_database():
     try:
         db = sqlite3.connect('user.db')
@@ -68,12 +69,17 @@ def init_database():
         print("All tables created successfully")
         # Add example users, posts, likes and follow & following datas for making and testing solution
         sql_statements = [
-            "INSERT INTO USER (id, username, email, full_name) VALUES (1, 'alice', 'alice@example.com', 'Alice Smith')",
-            "INSERT INTO USER (id, username, email, full_name) VALUES (2, 'bob', 'bob@example.com', 'Bob Johnson')",
-            "INSERT INTO USER (id, username, email, full_name) VALUES (3, 'charlie', 'charlie@example.com', 'Charlie Brown')",
-            "INSERT INTO POST (description, user_id, image) VALUES ('Hello World!', 1, 'image1.jpg')",
-            "INSERT INTO POST (description, user_id, image) VALUES ('My first post!', 2, 'image2.jpg')",
-            "INSERT INTO POST (description, user_id, image) VALUES ('Loving this platform!', 1, 'image3.jpg')",
+            "INSERT INTO USER (username, email, full_name) VALUES ('alice', 'alice@example.com', 'Alice Smith')",
+            "INSERT INTO USER (username, email, full_name) VALUES ('bob', 'bob@example.com', 'Bob Johnson')",
+            "INSERT INTO USER (username, email, full_name) VALUES ('charlie', 'charlie@example.com', 'Charlie Brown')",
+            "INSERT INTO USER (username, email, full_name) VALUES ('david', 'david@example.com', 'David Howard')",
+            "INSERT INTO POST (description, user_id, image) VALUES ('My first post!', 2, 'image1.jpg')",
+            "INSERT INTO POST (description, user_id, image) VALUES ('Hello!', 2, 'image2.jpg')",
+            "INSERT INTO POST (description, user_id, image) VALUES ('Loving this platform!', 2, 'image3.jpg')",
+            "INSERT INTO POST (description, user_id, image) VALUES ('Hi Everyone!', 4, 'image1.jpg')",
+            "INSERT INTO POST (description, user_id, image) VALUES ('Awesome!', 3, 'image2.jpg')",
+            "INSERT INTO POST (description, user_id, image) VALUES ('Hola!', 1, 'image3.jpg')",
+            "INSERT INTO POST (description, user_id, image) VALUES ('Love.', 3, 'image3.jpg')",
             "INSERT INTO FOLLOW (follower_id, following_id) VALUES (1, 2)",
             "INSERT INTO FOLLOW (follower_id, following_id) VALUES (1, 3)",
             "INSERT INTO FOLLOW (follower_id, following_id) VALUES (2, 3)",
@@ -94,7 +100,7 @@ def init_database():
         if db:
             db.close()
 
-# Solution 1:
+"""Solution 1:"""
 @dataclass
 class User:
     id: int
@@ -187,12 +193,13 @@ def get_posts(user_id: int, post_ids: List[int]) -> List[Post]:
 # Recursive solutions without memoization, as they might have exponential time complexity.
 # Unoptimized hash table operations, which can degrade to O(N) in the worst case.
 
-# Solution 2:
+"""Solution 2:"""
+""""
 @dataclass
 class Post:
     id: int
     owner_id: int
-
+"""
 def mix_by_owners(posts: List[Post]) -> List[Post]:
 
     owner_posts = defaultdict(deque)
@@ -217,13 +224,17 @@ def mix_by_owners(posts: List[Post]) -> List[Post]:
     # OVERALL COMPLEXITY IS O(N)
     return mixed_posts
 
-#
-if __name__ == "__main__":
-    '''######### uncomment this block to test solution 1 #########
-    # Test cases for Q1
+# NOTE: THERE ARE THREE TEST BLOCKS FOR SOLUTIONS. UNCOMMENT THE RELATED TEST BLOCK FOR TESTING THE SOLUTION
 
+def main():
+
+    init_database()
+
+    """TEST CASE FOR Q1"""
+
+    """
     user_id = 2
-    post_ids = [2, 3, 1]
+    post_ids = [2, 3, 4]
 
     user_id = 2
     post_ids = [4, 2, 1]
@@ -233,16 +244,40 @@ if __name__ == "__main__":
 
     posts = get_posts(user_id, post_ids)
     print(posts)
-    '''
 
-# Example Input for Solution 2:
-# Note: Question 2 focuses only on algorithm design instead of db access. Therefore, I decided to use the example input shown in the PDF.
-'''
-Input: [Post(id=1, owner_id=2), Post(id=2, owner_id=2), Post(id=3, owner_id=2), Post(id=5,
-owner_id=3), Post(id=7, owner_id=3), Post(id=4, owner_id=4)]
+    """
+    # Get necessary posts for perform Q2 Example
+    user_id = 1
+    post_ids = [1, 2, 3, 4, 5, 7]
+    posts = get_posts(user_id, post_ids)
 
+    for post in posts:
+        post.owner = post.owner.id
+        post.description = None
+        post.image = None
+        post.created_at = None
+        post.liked = None
+
+    sorted_posts = sorted(
+        [p for p in posts if p is not None],
+        key=lambda post: (post.owner, post.id)
+    )
+
+    print(sorted_posts)
+
+if __name__ == "__main__":
+    main()
+
+"""
+    Example Input for Solution 2:
+    Note: Question 2 focuses only on algorithm design instead of db access. Therefore, I decided to use the example input shown in the PDF.
+
+    Input: [Post(id=1, owner_id=2), Post(id=2, owner_id=2), Post(id=3, owner_id=2), Post(id=5,
+    owner_id=3), Post(id=7, owner_id=3), Post(id=4, owner_id=4)]
+"""
+
+"""TEST CASE FOR Q2"""
 '''
-''' ######### uncomment this block to test solution 2 #########
 Posts = []
 # The Post object is defined above the function signature..
 post_1 = Post(id=1, owner_id=2)
@@ -262,3 +297,5 @@ Posts.append(post_6)
 mixed_posts = mix_by_owners(Posts)
 print(mixed_posts)
 '''
+"""TEST CASE FOR Q3"""
+
