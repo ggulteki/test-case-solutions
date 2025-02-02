@@ -1,6 +1,17 @@
+"""
+File Name: solutions.py
+Description: InfinitumIT's Backend Case SOLUTIONS
+Author: gokberk gultekin
+Date: 2/2/2025
+"""
+
 import sqlite3
 from typing import List
 from dataclasses import dataclass
+from collections import defaultdict
+from collections import deque
+
+# TRANSFORM UNSUED SOLUTIONS BELOW INTO COMMENT BLOCKS BEFORE TRYING ANY SOLUTION TO PREVENT TECHNICAL CONFLICTS
 
 def init_database():
     try:
@@ -11,7 +22,7 @@ def init_database():
         db.execute("DROP TABLE IF EXISTS POST")
         db.execute("DROP TABLE IF EXISTS FOLLOW")
         db.execute("DROP TABLE IF EXISTS LIKE")
-
+        # create necessary tables for implementing of solution
         user = """ CREATE TABLE USER (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     username VARCHAR(255) NOT NULL,
@@ -55,7 +66,7 @@ def init_database():
         crsr.execute(like)
         db.commit()
         print("All tables created successfully")
-
+        # Add example users, posts, likes and follow & following datas for making and testing solution
         sql_statements = [
             "INSERT INTO USER (id, username, email, full_name) VALUES (1, 'alice', 'alice@example.com', 'Alice Smith')",
             "INSERT INTO USER (id, username, email, full_name) VALUES (2, 'bob', 'bob@example.com', 'Bob Johnson')",
@@ -161,7 +172,7 @@ def get_posts(user_id: int, post_ids: List[int]) -> List[Post]:
             db.close()
     return out
 
-# My limitations for guaranteeing O(N) time complexity:
+# My limitations in guaranteeing the worst-case O(N) time complexity:
 
 # DO:
 
@@ -183,28 +194,32 @@ class Post:
     owner_id: int
 
 def mix_by_owners(posts: List[Post]) -> List[Post]:
-    db = None
-    out = []
-    try:
-        db = sqlite3.connect("user.db")
-        crsr = db.cursor()
 
+    owner_posts = defaultdict(deque)
 
+    mixed_posts = []
+    # Use set() for ensure unique owner_ids
+    owner_ids = set()
+    # AVG COMPLEXITY IS O(N)
+    for post in posts:
+        # map posts to their related owner_ids
+        owner_posts[post.owner_id].append(post) # O(1)
+        owner_ids.add(post.owner_id) # 0(1)
+    # AVG COMPLEXITY IS O(N)
+    while True:
+        add = False
+        for owner_id in owner_ids:
+            if owner_posts[owner_id]:
+                mixed_posts.append(owner_posts[owner_id].popleft()) # O(1)
+                add = True
+        if not add:
+            break
+    # OVERALL COMPLEXITY IS O(N)
+    return mixed_posts
 
-    except sqlite3.Error as e:
-        print(f"Error executing query: {e}")
-        if db:
-            db.rollback()
-    except ValueError as ve:
-        print(ve)  # Handle the case where the user is not found
-    finally:
-        if db:
-            db.close()
-    return out
-
+#
 if __name__ == "__main__":
-    init_database()
-    '''
+    '''######### uncomment this block to test solution 1 #########
     # Test cases for Q1
 
     user_id = 2
@@ -220,35 +235,30 @@ if __name__ == "__main__":
     print(posts)
     '''
 
-    db = None
-    try:
-        db = sqlite3.connect("user.db")
-        crsr = db.cursor()
+# Example Input for Solution 2:
+# Note: Question 2 focuses only on algorithm design instead of db access. Therefore, I decided to use the example input shown in the PDF.
+'''
+Input: [Post(id=1, owner_id=2), Post(id=2, owner_id=2), Post(id=3, owner_id=2), Post(id=5,
+owner_id=3), Post(id=7, owner_id=3), Post(id=4, owner_id=4)]
 
-        # Get the post_id and owner_id
-        crsr.execute("SELECT id, user_id FROM POST")
-        row_out = crsr.fetchall()
-
-        if row_out is None:
-            raise ValueError("No posts found in database")
-
-        post = []
-        for row in row_out:
-            post.append(Post(id=row[0], owner_id=row[1]))
-
-        print(post)
-
-        sorted_post = mix_by_owners(post)
-        print(sorted_post)
-
-    except sqlite3.Error as e:
-        print(f"Error executing query: {e}")
-        if db:
-            db.rollback()
-    except ValueError as ve:
-        print(ve)  # Handle the case where the user is not found
-    finally:
-        if db:
-            db.close()
+'''
+''' ######### uncomment this block to test solution 2 #########
+Posts = []
+# The Post object is defined above the function signature..
+post_1 = Post(id=1, owner_id=2)
+Posts.append(post_1)
+post_2 = Post(id=2, owner_id=2)
+Posts.append(post_2)
+post_3 = Post(id=3, owner_id=2)
+Posts.append(post_3)
+post_4 = Post(id=5, owner_id=3)
+Posts.append(post_4)
+post_5 = Post(id=7, owner_id=3)
+Posts.append(post_5)
+post_6 = Post(id=4, owner_id=4)
+Posts.append(post_6)
 
 
+mixed_posts = mix_by_owners(Posts)
+print(mixed_posts)
+'''
