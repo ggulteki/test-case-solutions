@@ -11,9 +11,26 @@ from dataclasses import dataclass
 from collections import defaultdict
 from collections import deque
 
+@dataclass
+class User:
+    id: int
+    username: str
+    full_name: str
+    profile_picture: str
+    followed: bool
+
+@dataclass
+class Post:
+    id: int
+    description: str
+    owner: User
+    image: str
+    created_at: int
+    liked: bool
+
 """NOTE: TRANSFORM UNSUED SOLUTIONS BELOW INTO COMMENT BLOCKS BEFORE TRYING ANY SOLUTION TO PREVENT TECHNICAL CONFLICTS"""
 
-"""DB INITIALIZE FUNCTION FOR SOLUTIONS. I CHOOSE SQLITE3 BECAUSE OF ITS SIMPLY FORM"""
+"""DB INITIALIZATION FUNCTION FOR SOLUTIONS. I CHOSE SQLITE3 BECAUSE OF ITS SIMPLE FORM"""
 def init_database():
     try:
         db = sqlite3.connect('user.db')
@@ -101,22 +118,6 @@ def init_database():
             db.close()
 
 """Solution 1:"""
-@dataclass
-class User:
-    id: int
-    username: str
-    full_name: str
-    profile_picture: str
-    followed: bool
-
-@dataclass
-class Post:
-    id: int
-    description: str
-    owner: User
-    image: str
-    created_at: int
-    liked: bool
 
 def get_posts(user_id: int, post_ids: List[int]) -> List[Post]:
     db = None
@@ -194,12 +195,6 @@ def get_posts(user_id: int, post_ids: List[int]) -> List[Post]:
 # Unoptimized hash table operations, which can degrade to O(N) in the worst case.
 
 """Solution 2:"""
-""""
-@dataclass
-class Post:
-    id: int
-    owner_id: int
-"""
 def mix_by_owners(posts: List[Post]) -> List[Post]:
 
     owner_posts = defaultdict(deque)
@@ -210,14 +205,14 @@ def mix_by_owners(posts: List[Post]) -> List[Post]:
     # AVG COMPLEXITY IS O(N)
     for post in posts:
         # map posts to their related owner_ids
-        owner_posts[post.owner_id].append(post) # O(1)
-        owner_ids.add(post.owner_id) # 0(1)
+        owner_posts[post.owner].append(post) # O(1)
+        owner_ids.add(post.owner) # 0(1)
     # AVG COMPLEXITY IS O(N)
     while True:
         add = False
-        for owner_id in owner_ids:
-            if owner_posts[owner_id]:
-                mixed_posts.append(owner_posts[owner_id].popleft()) # O(1)
+        for owner in owner_ids:
+            if owner_posts[owner]:
+                mixed_posts.append(owner_posts[owner].popleft()) # O(1)
                 add = True
         if not add:
             break
@@ -233,6 +228,8 @@ def main():
     """TEST CASE FOR Q1"""
 
     """
+
+    # These are some cases to test the function to ensure that Q2's assumptions are met or not.
     user_id = 2
     post_ids = [2, 3, 4]
 
@@ -246,11 +243,17 @@ def main():
     print(posts)
 
     """
+
+    """TEST CASE FOR Q2"""
+
+    """
+
     # Get necessary posts for perform Q2 Example
     user_id = 1
     post_ids = [1, 2, 3, 4, 5, 7]
     posts = get_posts(user_id, post_ids)
 
+    # Delete unnecessary attributes to ensure the structure assumption for question 2
     for post in posts:
         post.owner = post.owner.id
         post.description = None
@@ -258,44 +261,28 @@ def main():
         post.created_at = None
         post.liked = None
 
-    sorted_posts = sorted(
-        [p for p in posts if p is not None],
-        key=lambda post: (post.owner, post.id)
-    )
+    # Sort the posts to ensure the first assumption for question 2 is met
+    sorted_posts = sorted(posts, key=lambda post: (post.owner, post.id))
 
-    print(sorted_posts)
+    # Print the solution to the terminal
+    print(mix_by_owners(sorted_posts))
+
+    """
+
+    """TEST CASE FOR Q3"""
+
+    # Get all posts from db for Q3 Example
+
+    user_id = 1
+    post_ids = [1, 2, 3, 4, 5, 6, 7]
+    posts = get_posts(user_id, post_ids)
+
+    # Delete unnecessary attributes to ensure the structure assumption for question 3
+    for post in posts:
+        post.owner = None
+        post.liked = None
+
+    print(posts)
 
 if __name__ == "__main__":
     main()
-
-"""
-    Example Input for Solution 2:
-    Note: Question 2 focuses only on algorithm design instead of db access. Therefore, I decided to use the example input shown in the PDF.
-
-    Input: [Post(id=1, owner_id=2), Post(id=2, owner_id=2), Post(id=3, owner_id=2), Post(id=5,
-    owner_id=3), Post(id=7, owner_id=3), Post(id=4, owner_id=4)]
-"""
-
-"""TEST CASE FOR Q2"""
-'''
-Posts = []
-# The Post object is defined above the function signature..
-post_1 = Post(id=1, owner_id=2)
-Posts.append(post_1)
-post_2 = Post(id=2, owner_id=2)
-Posts.append(post_2)
-post_3 = Post(id=3, owner_id=2)
-Posts.append(post_3)
-post_4 = Post(id=5, owner_id=3)
-Posts.append(post_4)
-post_5 = Post(id=7, owner_id=3)
-Posts.append(post_5)
-post_6 = Post(id=4, owner_id=4)
-Posts.append(post_6)
-
-
-mixed_posts = mix_by_owners(Posts)
-print(mixed_posts)
-'''
-"""TEST CASE FOR Q3"""
-
