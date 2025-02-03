@@ -4,6 +4,7 @@ Description: InfinitumIT's Backend Case SOLUTIONS
 Author: gokberk gultekin
 Date: 2/2/2025
 """
+# NOTE: THE PROGRAM MAY RUN A BIT SLOW BECAUSE OF THE SLEEP METHOD. DON'T WORRY ABOUT THAT
 
 import sqlite3
 from time import sleep
@@ -112,9 +113,11 @@ def init_database():
             "INSERT INTO LIKE (post_id, user_id) VALUES (3, 3)"
         ]
 
-        # Execute each SQL statement individually
         for statement in sql_statements:
+
+            # Execute each SQL statement individually
             crsr.execute(statement)
+
             # 1 second interval to ensure different created_at values for solution 3
             sleep(1)
 
@@ -294,7 +297,9 @@ def main():
 
     # Get necessary posts for perform Q2 Example
     user_id = 1
-    post_ids = [1, 2, 3, 4, 5, 7]
+
+    # Retrieve posts in a randomized order
+    post_ids = [5, 7, 3, 2, 1, 4]
     posts = get_posts(user_id, post_ids)
 
     # Delete unnecessary attributes to ensure the structure assumption for question 2
@@ -325,7 +330,9 @@ def main():
 
     user_id = 1
 
-    post_ids = [1, 2, 3, 4, 5, 6, 7]
+    # Retrieve posts in a randomized order
+    post_ids = [4, 7, 2, 6, 3, 5, 1]
+
     posts_lists = []
 
     # Get nested list
@@ -338,11 +345,31 @@ def main():
             post.owner = None
             post.liked = None
 
-    merged_posts = merge_posts(posts_lists)
+    print("Random ordered list of lists: ")
+
+    print(posts_lists)
+
+    print(" ")
+
+    print(" ")
+
+    print("Ordered list of lists by assumption 1: ")
+
+    sorted_posts_lists = sorted(posts_lists, key=lambda post_list: (post_list[0].created_at, post_list[0].id))
+
+    print(sorted_posts_lists)
+
+    print(" ")
+
+    print(" ")
+
+    print(" merge_posts output: ")
+
+    merged_posts = merge_posts(sorted_posts_lists)
 
     print(merged_posts)
 
-    """
+"""
 
 if __name__ == "__main__":
     main()
