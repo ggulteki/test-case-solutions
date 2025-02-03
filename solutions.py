@@ -86,7 +86,7 @@ def init_database():
         crsr.execute(follow)
         crsr.execute(like)
 
-
+        # Save changes to the database
         db.commit()
 
         print("All tables created successfully")
@@ -118,7 +118,6 @@ def init_database():
             # 1 second interval to ensure different created_at values for solution 3
             sleep(1)
 
-        # Save changes to the database
         db.commit()
 
     # Error handling for any database processes
@@ -136,6 +135,9 @@ def init_database():
 
 def get_posts(user_id: int, post_ids: List[int]) -> List[Post]:
 
+    # Remove duplicates from post_ids if they exist
+    unique_ids = list(dict.fromkeys(post_ids))
+
     out = []
 
     try:
@@ -152,7 +154,7 @@ def get_posts(user_id: int, post_ids: List[int]) -> List[Post]:
         # Requester object
         req_user = User(id=req_user_row[0], username=req_user_row[1], full_name=req_user_row[2], profile_picture=req_user_row[3], followed=False)
 
-        for post_id in post_ids:
+        for post_id in unique_ids:
             crsr.execute("SELECT id, description, user_id, image, created_at FROM POST WHERE id = ?", (post_id,))
             post_row = crsr.fetchone()
             if post_row is None:
@@ -219,34 +221,39 @@ def get_posts(user_id: int, post_ids: List[int]) -> List[Post]:
 
 def mix_by_owners(posts: List[Post]) -> List[Post]:
 
+    # Initialize a deque dictionary for efficiently mapping owners to posts
     owner_posts = defaultdict(deque)
 
+    # Initialize a list for the function's output
     mixed_posts = []
 
-    # Use set() for ensure unique owner_ids
-    owner_ids = set()
-
-    # AVG COMPLEXITY IS O(N)
+    # O(N)
     for post in posts:
-        # map posts to their related owner_ids
+        # map owner to posts
         owner_posts[post.owner].append(post) # O(1)
-        owner_ids.add(post.owner) # 0(1)
 
-    # AVG COMPLEXITY IS O(N)
-    while True:
-        add = False
-        for owner in owner_ids:
-            if owner_posts[owner]:
-                # Append posts from different owners at each time step to the output list
-                mixed_posts.append(owner_posts[owner].popleft()) # O(1)
-                add = True
-        if not add:
-            break
+    # Retrieve unique owner_ids into a deque using the keys() method from the dictionary
+    # Deque operations are more efficient than lists; that's why I used a deque here.
+    owner_ids = deque(owner_posts.keys())
 
-    # OVERALL COMPLEXITY IS O(N)
+    # O(N)
+    while owner_ids:
+        # Retrieve the current owner ID from the deque
+        owner = owner_ids.popleft()
+
+        # Add the related post for the current owner ID to the output list
+        mixed_posts.append(owner_posts[owner].popleft())
+
+        # Check for multiple posts for the current owner_id to ensure all posts have been processed
+        # If current owner_id is related to multiple posts, append it to the right end of the owner_ids to solve this problem
+        if owner_posts[owner]:
+            owner_ids.append(owner)
+
+    # Total worst-case time complexity is: O(N)
     return mixed_posts
 
 """ Solution 3: """
+
 def merge_posts(list_of_posts: List[List[Post]]) -> List[Post]:
 
     merged_posts = []
@@ -271,20 +278,15 @@ def main():
 
     """
 
-    # These are some cases to test the function to ensure that Q2's assumptions are met or not.
-    user_id = 2
-    post_ids = [2, 3, 4]
-
-    user_id = 2
-    post_ids = [4, 2, 1]
-
-    user_id = 4
-    post_ids = [2, 3, 1]
+    user_id = 1
+    post_ids = [10, 3, 2, 4, 3]
 
     posts = get_posts(user_id, post_ids)
+
     print(posts)
 
     """
+
 
     """TEST CASE FOR Q2"""
 
@@ -307,11 +309,17 @@ def main():
     sorted_posts = sorted(posts, key=lambda post: (post.owner, post.id))
 
     # Print the solution to the terminal
+    print(sorted_posts)
+    print(" ")
+    print(" ")
     print(mix_by_owners(sorted_posts))
 
     """
 
+
     """TEST CASE FOR Q3"""
+
+    """
 
     # Get all posts from db for Q3 Example
 
@@ -333,6 +341,8 @@ def main():
     merged_posts = merge_posts(posts_lists)
 
     print(merged_posts)
+
+    """
 
 if __name__ == "__main__":
     main()
