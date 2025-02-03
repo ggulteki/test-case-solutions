@@ -6,11 +6,13 @@ Date: 2/2/2025
 """
 
 import sqlite3
+from time import sleep
 from typing import List
 from dataclasses import dataclass
 from collections import defaultdict
 from collections import deque
 
+# User and Post objects for a simple implementation of the problems.
 @dataclass
 class User:
     id: int
@@ -25,22 +27,22 @@ class Post:
     description: str
     owner: User
     image: str
-    created_at: int
+    created_at: str
     liked: bool
 
-"""NOTE: TRANSFORM UNSUED SOLUTIONS BELOW INTO COMMENT BLOCKS BEFORE TRYING ANY SOLUTION TO PREVENT TECHNICAL CONFLICTS"""
-
-"""DB INITIALIZATION FUNCTION FOR SOLUTIONS. I CHOSE SQLITE3 BECAUSE OF ITS SIMPLE FORM"""
+# Database initialization function for solutions. I chose SQLite3 because of its simplicity.
 def init_database():
     try:
         db = sqlite3.connect('user.db')
         crsr = db.cursor()
 
+        # Drop existing tables to ensure a fresh database setup.
         db.execute("DROP TABLE IF EXISTS USER")
         db.execute("DROP TABLE IF EXISTS POST")
         db.execute("DROP TABLE IF EXISTS FOLLOW")
         db.execute("DROP TABLE IF EXISTS LIKE")
-        # create necessary tables for implementing of solution
+
+        # Create necessary tables for the solutions implementation
         user = """ CREATE TABLE USER (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     username VARCHAR(255) NOT NULL,
@@ -78,12 +80,17 @@ def init_database():
                     FOREIGN KEY (user_id) REFERENCES USER(id) ON DELETE CASCADE
                 )"""
 
+        # Execute the queries to create the tables.
         crsr.execute(user)
         crsr.execute(post)
         crsr.execute(follow)
         crsr.execute(like)
+
+
         db.commit()
+
         print("All tables created successfully")
+
         # Add example users, posts, likes and follow & following datas for making and testing solution
         sql_statements = [
             "INSERT INTO USER (username, email, full_name) VALUES ('alice', 'alice@example.com', 'Alice Smith')",
@@ -108,20 +115,29 @@ def init_database():
         # Execute each SQL statement individually
         for statement in sql_statements:
             crsr.execute(statement)
+            # 1 second interval to ensure different created_at values for solution 3
+            sleep(1)
+
+        # Save changes to the database
         db.commit()
 
+    # Error handling for any database processes
     except sqlite3.Error as e:
         print(f"Error occurred: {e}")
+        # Undo last modifications and restore the database
         db.rollback()
+
     finally:
         if db:
+            # Terminate the database connection after all processes have been completed successfully.
             db.close()
 
 """Solution 1:"""
 
 def get_posts(user_id: int, post_ids: List[int]) -> List[Post]:
-    db = None
+
     out = []
+
     try:
         db = sqlite3.connect('user.db')
         crsr = db.cursor()
@@ -129,11 +145,12 @@ def get_posts(user_id: int, post_ids: List[int]) -> List[Post]:
         # Get the requesting user
         crsr.execute("SELECT id, username, full_name, profile_picture FROM USER WHERE id = ?", (user_id,))
         req_user_row = crsr.fetchone()
+
         # Error handle for non-existing user
         if req_user_row is None:
             raise ValueError("User not found")
-
-        req_user = User(id=req_user_row[0], username=req_user_row[1], full_name=req_user_row[2], profile_picture=req_user_row[3], followed=False) # requester object
+        # Requester object
+        req_user = User(id=req_user_row[0], username=req_user_row[1], full_name=req_user_row[2], profile_picture=req_user_row[3], followed=False)
 
         for post_id in post_ids:
             crsr.execute("SELECT id, description, user_id, image, created_at FROM POST WHERE id = ?", (post_id,))
@@ -172,11 +189,15 @@ def get_posts(user_id: int, post_ids: List[int]) -> List[Post]:
         print(f"Error executing query: {e}")
         if db:
             db.rollback()
+
+    # Handle the case where the user is not found
     except ValueError as ve:
-        print(ve)  # Handle the case where the user is not found
+        print(ve)
+
     finally:
         if db:
             db.close()
+
     return out
 
 # My limitations in guaranteeing the worst-case O(N) time complexity:
@@ -195,29 +216,50 @@ def get_posts(user_id: int, post_ids: List[int]) -> List[Post]:
 # Unoptimized hash table operations, which can degrade to O(N) in the worst case.
 
 """Solution 2:"""
+
 def mix_by_owners(posts: List[Post]) -> List[Post]:
 
     owner_posts = defaultdict(deque)
 
     mixed_posts = []
+
     # Use set() for ensure unique owner_ids
     owner_ids = set()
+
     # AVG COMPLEXITY IS O(N)
     for post in posts:
         # map posts to their related owner_ids
         owner_posts[post.owner].append(post) # O(1)
         owner_ids.add(post.owner) # 0(1)
+
     # AVG COMPLEXITY IS O(N)
     while True:
         add = False
         for owner in owner_ids:
             if owner_posts[owner]:
+                # Append posts from different owners at each time step to the output list
                 mixed_posts.append(owner_posts[owner].popleft()) # O(1)
                 add = True
         if not add:
             break
+
     # OVERALL COMPLEXITY IS O(N)
     return mixed_posts
+
+""" Solution 3: """
+def merge_posts(list_of_posts: List[List[Post]]) -> List[Post]:
+
+    merged_posts = []
+    # AVG COMPLEXITY IS O(N)
+    for list_of_post in list_of_posts:
+        # Add elements from the inner lists to the output list
+        merged_posts.extend(list_of_post)
+
+    merged_posts.reverse() # O(N)
+
+    # OVERALL COMPLEXITY IS O(N)
+    return merged_posts
+
 
 # NOTE: THERE ARE THREE TEST BLOCKS FOR SOLUTIONS. UNCOMMENT THE RELATED TEST BLOCK FOR TESTING THE SOLUTION
 
@@ -274,15 +316,23 @@ def main():
     # Get all posts from db for Q3 Example
 
     user_id = 1
+
     post_ids = [1, 2, 3, 4, 5, 6, 7]
-    posts = get_posts(user_id, post_ids)
+    posts_lists = []
+
+    # Get nested list
+    for post_id in post_ids:
+        posts_lists.append(get_posts(user_id, [post_id]))
 
     # Delete unnecessary attributes to ensure the structure assumption for question 3
-    for post in posts:
-        post.owner = None
-        post.liked = None
+    for posts_list in posts_lists:
+        for post in  posts_list:
+            post.owner = None
+            post.liked = None
 
-    print(posts)
+    merged_posts = merge_posts(posts_lists)
+
+    print(merged_posts)
 
 if __name__ == "__main__":
     main()
