@@ -1,2 +1,2 @@
 # test-case-solutions
-Infinitum Backend's problem solutions
+InfinitumIT Backend problem solutions
